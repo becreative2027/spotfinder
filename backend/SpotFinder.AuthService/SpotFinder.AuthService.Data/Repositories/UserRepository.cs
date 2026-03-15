@@ -22,6 +22,9 @@ public class UserRepository : IUserRepository
     public async Task<bool> ExistsByEmailAsync(string email, CancellationToken ct = default)
         => await _context.Users.AnyAsync(u => u.Email == email.ToLower(), ct);
 
+    public async Task<User?> GetByPhoneNumberAsync(string phoneNumber, CancellationToken ct = default)
+        => await _context.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber, ct);
+
     public async Task AddAsync(User user, CancellationToken ct = default)
     {
         user.Email = user.Email.ToLower();
