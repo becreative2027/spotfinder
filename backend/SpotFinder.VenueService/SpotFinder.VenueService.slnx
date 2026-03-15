@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="SpotFinder.VenueService.API/SpotFinder.VenueService.API.csproj" />
+  <Project Path="SpotFinder.VenueService.Business/SpotFinder.VenueService.Business.csproj" />
+  <Project Path="SpotFinder.VenueService.Data/SpotFinder.VenueService.Data.csproj" />
+</Solution>
