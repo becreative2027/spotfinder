@@ -11,6 +11,7 @@ public class AppDbContext : DbContext
     public DbSet<UserRefreshToken> UserRefreshTokens => Set<UserRefreshToken>();
     public DbSet<UserFavorite> UserFavorites => Set<UserFavorite>();
     public DbSet<UserVisit> UserVisits => Set<UserVisit>();
+    public DbSet<OtpCode> OtpCodes => Set<OtpCode>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -72,6 +73,19 @@ public class AppDbContext : DbContext
             entity.HasOne(e => e.User)
                   .WithMany(u => u.Visits)
                   .HasForeignKey(e => e.UserId);
+        });
+
+        modelBuilder.Entity<OtpCode>(entity =>
+        {
+            entity.ToTable("otp_codes");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Id).HasColumnName("id").HasDefaultValueSql("gen_random_uuid()");
+            entity.Property(e => e.PhoneNumber).HasColumnName("phone_number").HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Code).HasColumnName("code").HasMaxLength(10).IsRequired();
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.IsUsed).HasColumnName("is_used").HasDefaultValue(false);
+            entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()");
+            entity.HasIndex(e => e.PhoneNumber);
         });
     }
 }

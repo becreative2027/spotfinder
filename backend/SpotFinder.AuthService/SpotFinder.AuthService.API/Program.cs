@@ -18,9 +18,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
 
 // Business Services
 builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+builder.Services.AddScoped<IAppleAuthService, AppleAuthService>();
+
+// SMS Service — Development: MockSmsService, Production: TwilioSmsService
+if (builder.Environment.IsDevelopment())
+    builder.Services.AddScoped<ISmsService, MockSmsService>();
+else
+    builder.Services.AddScoped<ISmsService, TwilioSmsService>();
+
+// HttpClient for Apple JWKS endpoint
+builder.Services.AddHttpClient("AppleAuth");
 
 // MediatR
 builder.Services.AddMediatR(cfg =>

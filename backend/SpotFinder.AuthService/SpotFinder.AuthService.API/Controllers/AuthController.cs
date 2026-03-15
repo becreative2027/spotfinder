@@ -65,4 +65,36 @@ public class AuthController : ControllerBase
         var result = await _mediator.Send(new GetCurrentUserQuery(userId), ct);
         return Ok(result);
     }
+
+    /// <summary>Google ID token ile giriş/kayıt</summary>
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginCommand command, CancellationToken ct)
+    {
+        var result = await _mediator.Send(command, ct);
+        return Ok(result);
+    }
+
+    /// <summary>Apple identity token ile giriş/kayıt</summary>
+    [HttpPost("apple")]
+    public async Task<IActionResult> AppleLogin([FromBody] AppleLoginCommand command, CancellationToken ct)
+    {
+        var result = await _mediator.Send(command, ct);
+        return Ok(result);
+    }
+
+    /// <summary>SMS OTP gönder</summary>
+    [HttpPost("otp/send")]
+    public async Task<IActionResult> SendOtp([FromBody] SendOtpCommand command, CancellationToken ct)
+    {
+        await _mediator.Send(command, ct);
+        return Ok(new { message = "OTP kodu gönderildi." });
+    }
+
+    /// <summary>OTP doğrula ve JWT döndür</summary>
+    [HttpPost("otp/verify")]
+    public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpCommand command, CancellationToken ct)
+    {
+        var result = await _mediator.Send(command, ct);
+        return Ok(result);
+    }
 }
