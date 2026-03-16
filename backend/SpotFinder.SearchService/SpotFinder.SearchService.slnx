@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="SpotFinder.SearchService.API/SpotFinder.SearchService.API.csproj" />
+  <Project Path="SpotFinder.SearchService.Business/SpotFinder.SearchService.Business.csproj" />
+  <Project Path="SpotFinder.SearchService.Data/SpotFinder.SearchService.Data.csproj" />
+</Solution>
