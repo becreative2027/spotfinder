@@ -1,0 +1,496 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:spotfinder_app/features/explore/data/models/venue_model.dart';
+import 'package:spotfinder_app/features/explore/presentation/bloc/venue_bloc.dart';
+import 'package:spotfinder_app/features/favorites/presentation/bloc/favorite_bloc.dart';
+
+class VenueDetailScreen extends StatefulWidget {
+  final String venueId;
+  const VenueDetailScreen({super.key, required this.venueId});
+
+  @override
+  State<VenueDetailScreen> createState() => _VenueDetailScreenState();
+}
+
+class _VenueDetailScreenState extends State<VenueDetailScreen> {
+  int _currentPhotoIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<VenueBloc>().add(LoadVenueDetail(widget.venueId));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: BlocBuilder<VenueBloc, VenueState>(
+        builder: (context, state) {
+          if (state is VenueLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (state is VenueNotFound) {
+            return _NotFound();
+          }
+          if (state is VenueError) {
+            return _ErrorBody(message: state.message, onRetry: () {
+              context.read<VenueBloc>().add(LoadVenueDetail(widget.venueId));
+            });
+          }
+          if (state is VenueDetailLoaded) {
+            return _DetailBody(
+              venue: state.venue,
+              currentPhotoIndex: _currentPhotoIndex,
+              onPhotoChanged: (i) => setState(() => _currentPhotoIndex = i),
+            );
+          }
+          return const SizedBox.shrink();
+        },
+      ),
+    );
+  }
+}
+
+class _DetailBody extends StatelessWidget {
+  final VenueModel venue;
+  final int currentPhotoIndex;
+  final ValueChanged<int> onPhotoChanged;
+
+  const _DetailBody({
+    required this.venue,
+    required this.currentPhotoIndex,
+    required this.onPhotoChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final galleryPhotos = venue.galleryPhotos;
+    final menuPhotos = venue.menuPhotos;
+
+    return CustomScrollView(
+      slivers: [
+        // ─── Fotoğraf Galerisi (SliverAppBar) ────────────────────────
+        SliverAppBar(
+          expandedHeight: 300,
+          pinned: true,
+          actions: [
+            // Favori Butonu
+            BlocBuilder<FavoriteBloc, FavoriteState>(
+              builder: (context, state) {
+                final isFav = state is FavoriteLoaded && state.isFavorite(venue.id);
+                return IconButton(
+                  icon: Icon(
+                    isFav ? Icons.favorite : Icons.favorite_border,
+                    color: isFav ? Colors.red : Colors.white,
+                  ),
+                  onPressed: () =>
+                      context.read<FavoriteBloc>().add(ToggleFavorite(venue.id)),
+                );
+              },
+            ),
+            // Paylaş Butonu
+            IconButton(
+              icon: const Icon(Icons.share_outlined, color: Colors.white),
+              onPressed: () => Share.share(
+                '${venue.name} — ${venue.shareUrl}',
+                subject: venue.name,
+              ),
+            ),
+          ],
+          flexibleSpace: FlexibleSpaceBar(
+            background: galleryPhotos.isEmpty
+                ? _PlaceholderHero()
+                : _PhotoGallery(
+                    photos: galleryPhotos,
+                    currentIndex: currentPhotoIndex,
+                    onChanged: onPhotoChanged,
+                  ),
+          ),
+        ),
+
+        // ─── İçerik ───────────────────────────────────────────────────
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // İsim ve Puan
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        venue.name,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.star_rounded, color: Colors.amber[600], size: 20),
+                            const SizedBox(width: 4),
+                            Text(
+                              venue.averageRating.toStringAsFixed(1),
+                              style: theme.textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          '${venue.reviewCount} yorum',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 12),
+
+                // Konsept Etiketleri
+                if (venue.conceptTags.isNotEmpty)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: venue.conceptTags.map((tag) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          tag.nameTr,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+
+                const SizedBox(height: 20),
+                const Divider(),
+                const SizedBox(height: 16),
+
+                // Adres
+                if (venue.address != null) ...[
+                  _InfoRow(
+                    icon: Icons.location_on_outlined,
+                    text: '${venue.address}${venue.districtName != null ? ', ${venue.districtName}' : ''}',
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Otopark
+                _InfoRow(
+                  icon: Icons.local_parking_outlined,
+                  text: venue.parkingStatusText,
+                ),
+                const SizedBox(height: 12),
+
+                // Çalışma Saatleri (placeholder)
+                _InfoRow(
+                  icon: Icons.access_time_outlined,
+                  text: 'Çalışma saatleri bilgisi yakında eklenecek',
+                  muted: true,
+                ),
+
+                const SizedBox(height: 20),
+
+                // Açıklama
+                if (venue.description != null && venue.description!.isNotEmpty) ...[
+                  Text(
+                    'Hakkında',
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    venue.description!,
+                    style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                // Harita
+                if (venue.lat != null && venue.lng != null) ...[
+                  Text(
+                    'Konum',
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  _MiniMap(lat: venue.lat!, lng: venue.lng!, name: venue.name),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openDirections(venue.lat!, venue.lng!, venue.name),
+                      icon: const Icon(Icons.directions_outlined),
+                      label: const Text('Yol Tarifi Al'),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                // Menü Fotoğrafları
+                if (menuPhotos.isNotEmpty) ...[
+                  Text(
+                    'Menü',
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 180,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: menuPhotos.length,
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemBuilder: (context, index) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: CachedNetworkImage(
+                            imageUrl: menuPhotos[index].url,
+                            width: 140,
+                            height: 180,
+                            fit: BoxFit.cover,
+                            errorWidget: (_, __, ___) => Container(
+                              width: 140,
+                              color: colorScheme.surfaceVariant,
+                              child: Icon(Icons.broken_image_outlined,
+                                  color: colorScheme.onSurfaceVariant),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openDirections(double lat, double lng, String name) async {
+    final encodedName = Uri.encodeComponent(name);
+    final uri = Uri.parse(
+      'https://maps.google.com/?q=$encodedName&ll=$lat,$lng',
+    );
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
+}
+
+class _PhotoGallery extends StatefulWidget {
+  final List<VenuePhotoModel> photos;
+  final int currentIndex;
+  final ValueChanged<int> onChanged;
+
+  const _PhotoGallery({
+    required this.photos,
+    required this.currentIndex,
+    required this.onChanged,
+  });
+
+  @override
+  State<_PhotoGallery> createState() => _PhotoGalleryState();
+}
+
+class _PhotoGalleryState extends State<_PhotoGallery> {
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: widget.currentIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        PageView.builder(
+          controller: _pageController,
+          onPageChanged: widget.onChanged,
+          itemCount: widget.photos.length,
+          itemBuilder: (_, index) => CachedNetworkImage(
+            imageUrl: widget.photos[index].url,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => Container(color: Colors.grey[300]),
+            errorWidget: (_, __, ___) => Container(
+              color: Colors.grey[300],
+              child: const Icon(Icons.broken_image_outlined, size: 48),
+            ),
+          ),
+        ),
+        if (widget.photos.length > 1)
+          Positioned(
+            bottom: 12,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(widget.photos.length, (index) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: index == widget.currentIndex ? 20 : 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: index == widget.currentIndex
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                );
+              }),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _MiniMap extends StatelessWidget {
+  final double lat;
+  final double lng;
+  final String name;
+
+  const _MiniMap({required this.lat, required this.lng, required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 200,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: GoogleMap(
+          initialCameraPosition: CameraPosition(
+            target: LatLng(lat, lng),
+            zoom: 15,
+          ),
+          markers: {
+            Marker(
+              markerId: const MarkerId('venue'),
+              position: LatLng(lat, lng),
+              infoWindow: InfoWindow(title: name),
+            ),
+          },
+          zoomControlsEnabled: false,
+          myLocationButtonEnabled: false,
+          mapToolbarEnabled: false,
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final bool muted;
+
+  const _InfoRow({required this.icon, required this.text, this.muted = false});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = muted ? colorScheme.onSurfaceVariant : colorScheme.onSurface;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: color),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PlaceholderHero extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      color: colorScheme.surfaceVariant,
+      child: Center(
+        child: Icon(Icons.image_outlined, size: 64, color: colorScheme.onSurfaceVariant),
+      ),
+    );
+  }
+}
+
+class _NotFound extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.search_off, size: 64),
+          const SizedBox(height: 16),
+          const Text('Mekân bulunamadı'),
+          const SizedBox(height: 16),
+          OutlinedButton(
+            onPressed: () => context.pop(),
+            child: const Text('Geri Dön'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorBody extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorBody({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          OutlinedButton(onPressed: onRetry, child: const Text('Tekrar Dene')),
+        ],
+      ),
+    );
+  }
+}

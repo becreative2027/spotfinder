@@ -1,10 +1,20 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:spotfinder_app/core/di/service_locator.dart';
 import 'package:spotfinder_app/features/auth/presentation/screens/splash_screen.dart';
 import 'package:spotfinder_app/features/auth/presentation/screens/onboarding_screen.dart';
 import 'package:spotfinder_app/features/auth/presentation/screens/login_screen.dart';
 import 'package:spotfinder_app/features/auth/presentation/screens/register_screen.dart';
 import 'package:spotfinder_app/features/auth/presentation/screens/otp_screen.dart';
+import 'package:spotfinder_app/features/explore/presentation/bloc/search_bloc.dart';
+import 'package:spotfinder_app/features/explore/presentation/bloc/venue_bloc.dart';
+import 'package:spotfinder_app/features/explore/presentation/screens/home_screen.dart';
+import 'package:spotfinder_app/features/explore/presentation/screens/explore_screen.dart';
+import 'package:spotfinder_app/features/explore/presentation/screens/search_results_screen.dart';
+import 'package:spotfinder_app/features/explore/presentation/screens/venue_detail_screen.dart';
+import 'package:spotfinder_app/features/explore/presentation/screens/visits_screen.dart';
+import 'package:spotfinder_app/features/favorites/presentation/screens/favorites_screen.dart';
+import 'package:spotfinder_app/shared/navigation/main_shell.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/',
@@ -32,19 +42,63 @@ final GoRouter appRouter = GoRouter(
         return OtpScreen(phoneNumber: phone);
       },
     ),
-    GoRoute(
-      path: '/home',
-      builder: (_, __) => const Scaffold(
-        body: Center(
-          child: Text(
-            "Ana Sayfa - Adım 9'da gelecek",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
+
+    // ─── Shell: Bottom Navigation ──────────────────────────────────────────
+    ShellRoute(
+      builder: (context, state, child) => MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) => VenueBloc(
+              searchRepository: ServiceLocator.searchRepository,
+              venueRepository: ServiceLocator.venueRepository,
             ),
           ),
-        ),
+          BlocProvider(
+            create: (_) => SearchBloc(
+              searchRepository: ServiceLocator.searchRepository,
+              venueRepository: ServiceLocator.venueRepository,
+            ),
+          ),
+        ],
+        child: MainShell(child: child),
       ),
+      routes: [
+        GoRoute(
+          path: '/home',
+          builder: (_, __) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/explore',
+          builder: (_, __) => const ExploreScreen(),
+        ),
+        GoRoute(
+          path: '/favorites',
+          builder: (_, __) => const FavoritesScreen(),
+        ),
+      ],
+    ),
+
+    // ─── Full-screen routes (no bottom nav) ───────────────────────────────
+    GoRoute(
+      path: '/search',
+      builder: (_, __) => const SearchResultsScreen(),
+    ),
+    GoRoute(
+      path: '/venue/:id',
+      builder: (context, state) {
+        final venueId = state.pathParameters['id']!;
+        return BlocProvider(
+          create: (_) => VenueBloc(
+            searchRepository: ServiceLocator.searchRepository,
+            venueRepository: ServiceLocator.venueRepository,
+          ),
+          child: VenueDetailScreen(venueId: venueId),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/visits',
+      builder: (_, __) => const VisitsScreen(),
     ),
   ],
 );
