@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-// import 'package:spotfinder_app/l10n/app_localizations.dart'; // Uncomment after running: flutter gen-l10n
+import 'package:spotfinder_app/l10n/app_localizations.dart';
 import 'package:spotfinder_app/core/router/app_router.dart';
 import 'package:spotfinder_app/core/theme/app_theme.dart';
 import 'package:spotfinder_app/core/di/service_locator.dart';
@@ -22,7 +22,7 @@ class SpotFinderApp extends StatelessWidget {
         themeMode: ThemeMode.system,
         routerConfig: appRouter,
         localizationsDelegates: const [
-          // AppLocalizations.delegate, // Uncomment after running: flutter gen-l10n
+          AppLocalizations.delegate,
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
