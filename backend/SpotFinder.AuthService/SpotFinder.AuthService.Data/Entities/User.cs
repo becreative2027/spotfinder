@@ -11,6 +11,7 @@ public class User
     public string Provider { get; set; } = "local";
     public string Role { get; set; } = "user";
     public bool IsActive { get; set; } = true;
+    public string? FcmToken { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
 

@@ -7,6 +7,8 @@ using System.Security.Claims;
 
 namespace SpotFinder.AuthService.API.Controllers;
 
+public record SaveFcmTokenRequest(string FcmToken);
+
 [ApiController]
 [Route("api/v1/users")]
 [Authorize]
@@ -67,6 +69,16 @@ public class UsersController : ControllerBase
 
         var result = await _mediator.Send(new GetVisitsQuery(userId.Value), ct);
         return Ok(result);
+    }
+
+    [HttpPost("fcm-token")]
+    public async Task<IActionResult> SaveFcmToken([FromBody] SaveFcmTokenRequest request, CancellationToken ct)
+    {
+        var userId = GetUserId();
+        if (userId == null) return Unauthorized();
+
+        await _mediator.Send(new SaveFcmTokenCommand(userId.Value, request.FcmToken), ct);
+        return NoContent();
     }
 
     private Guid? GetUserId()

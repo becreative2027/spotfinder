@@ -91,6 +91,11 @@ namespace SpotFinder.AuthService.Data.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("email");
 
+                    b.Property<string>("FcmToken")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("fcm_token");
+
                     b.Property<string>("FullName")
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)")
