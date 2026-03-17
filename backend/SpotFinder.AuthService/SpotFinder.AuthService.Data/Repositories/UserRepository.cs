@@ -25,6 +25,14 @@ public class UserRepository : IUserRepository
     public async Task<User?> GetByPhoneNumberAsync(string phoneNumber, CancellationToken ct = default)
         => await _context.Users.FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber, ct);
 
+    public async Task<(IEnumerable<User> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = _context.Users.OrderByDescending(u => u.CreatedAt);
+        var total = await query.CountAsync(ct);
+        var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+        return (items, total);
+    }
+
     public async Task AddAsync(User user, CancellationToken ct = default)
     {
         user.Email = user.Email.ToLower();

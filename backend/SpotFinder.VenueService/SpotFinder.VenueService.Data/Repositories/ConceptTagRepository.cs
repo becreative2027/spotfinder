@@ -18,6 +18,14 @@ public class ConceptTagRepository : IConceptTagRepository
     public async Task AddAsync(ConceptTag tag, CancellationToken ct = default) =>
         await _db.ConceptTags.AddAsync(tag, ct);
 
+    public async Task<bool> DeleteAsync(int id, CancellationToken ct = default)
+    {
+        var tag = await _db.ConceptTags.FirstOrDefaultAsync(t => t.Id == id, ct);
+        if (tag is null) return false;
+        _db.ConceptTags.Remove(tag);
+        return true;
+    }
+
     public async Task SaveChangesAsync(CancellationToken ct = default) =>
         await _db.SaveChangesAsync(ct);
 }

@@ -27,4 +27,12 @@ public class ConceptTagsController : ControllerBase
         var result = await _mediator.Send(command, ct);
         return Ok(result);
     }
+
+    [HttpDelete("{id:int}")]
+    [Authorize(Roles = "admin")]
+    public async Task<IActionResult> Delete(int id, CancellationToken ct = default)
+    {
+        var deleted = await _mediator.Send(new DeleteConceptTagCommand(id), ct);
+        return deleted ? NoContent() : NotFound();
+    }
 }

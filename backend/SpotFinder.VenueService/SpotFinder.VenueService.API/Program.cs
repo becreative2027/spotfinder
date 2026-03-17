@@ -19,6 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IVenueRepository, VenueRepository>();
 builder.Services.AddScoped<IDistrictRepository, DistrictRepository>();
 builder.Services.AddScoped<IConceptTagRepository, ConceptTagRepository>();
+builder.Services.AddScoped<IVenuePhotoRepository, VenuePhotoRepository>();
 
 // MediatR
 builder.Services.AddMediatR(cfg =>
