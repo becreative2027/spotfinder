@@ -19,6 +19,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IVenueRepository, VenueRepository>();
 builder.Services.AddScoped<IDistrictRepository, DistrictRepository>();
 builder.Services.AddScoped<IConceptTagRepository, ConceptTagRepository>();
+builder.Services.AddScoped<IVenuePhotoRepository, VenuePhotoRepository>();
 
 // MediatR
 builder.Services.AddMediatR(cfg =>
@@ -54,6 +55,15 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
+
+// CORS — Admin Panel (localhost:3000) and Flutter dev
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAdminPanel", policy =>
+        policy.WithOrigins("http://localhost:3000", "http://localhost:3001")
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -98,6 +108,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseCors("AllowAdminPanel");
 
 app.UseSwagger();
 app.UseSwaggerUI(c =>
