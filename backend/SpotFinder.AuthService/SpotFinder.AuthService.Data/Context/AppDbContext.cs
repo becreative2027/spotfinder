@@ -31,6 +31,7 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Provider).HasColumnName("provider").HasMaxLength(50).HasDefaultValue("local");
             entity.Property(e => e.Role).HasColumnName("role").HasMaxLength(50).HasDefaultValue("user");
             entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(true);
+            entity.Property(e => e.FcmToken).HasColumnName("fcm_token").HasMaxLength(500);
             entity.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()");
             entity.Property(e => e.UpdatedAt).HasColumnName("updated_at");
         });

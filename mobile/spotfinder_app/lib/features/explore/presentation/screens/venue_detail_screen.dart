@@ -5,9 +5,12 @@ import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:spotfinder_app/core/di/service_locator.dart';
 import 'package:spotfinder_app/features/explore/data/models/venue_model.dart';
 import 'package:spotfinder_app/features/explore/presentation/bloc/venue_bloc.dart';
 import 'package:spotfinder_app/features/favorites/presentation/bloc/favorite_bloc.dart';
+import 'package:spotfinder_app/features/reviews/data/models/review_model.dart';
+import 'package:spotfinder_app/features/reviews/presentation/bloc/review_bloc.dart';
 
 class VenueDetailScreen extends StatefulWidget {
   final String venueId;
@@ -28,29 +31,39 @@ class _VenueDetailScreenState extends State<VenueDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: BlocBuilder<VenueBloc, VenueState>(
-        builder: (context, state) {
-          if (state is VenueLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (state is VenueNotFound) {
-            return _NotFound();
-          }
-          if (state is VenueError) {
-            return _ErrorBody(message: state.message, onRetry: () {
-              context.read<VenueBloc>().add(LoadVenueDetail(widget.venueId));
-            });
-          }
+    return BlocProvider(
+      create: (_) => ReviewBloc(reviewRepository: ServiceLocator.reviewRepository),
+      child: BlocListener<VenueBloc, VenueState>(
+        listener: (context, state) {
           if (state is VenueDetailLoaded) {
-            return _DetailBody(
-              venue: state.venue,
-              currentPhotoIndex: _currentPhotoIndex,
-              onPhotoChanged: (i) => setState(() => _currentPhotoIndex = i),
-            );
+            context.read<ReviewBloc>().add(LoadVenueReviews(widget.venueId));
           }
-          return const SizedBox.shrink();
         },
+        child: Scaffold(
+          body: BlocBuilder<VenueBloc, VenueState>(
+            builder: (context, state) {
+              if (state is VenueLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (state is VenueNotFound) {
+                return _NotFound();
+              }
+              if (state is VenueError) {
+                return _ErrorBody(message: state.message, onRetry: () {
+                  context.read<VenueBloc>().add(LoadVenueDetail(widget.venueId));
+                });
+              }
+              if (state is VenueDetailLoaded) {
+                return _DetailBody(
+                  venue: state.venue,
+                  currentPhotoIndex: _currentPhotoIndex,
+                  onPhotoChanged: (i) => setState(() => _currentPhotoIndex = i),
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
+        ),
       ),
     );
   }
@@ -285,6 +298,53 @@ class _DetailBody extends StatelessWidget {
                   const SizedBox(height: 20),
                 ],
 
+                // ─── Yorumlar ──────────────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Yorumlar',
+                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => context.push(
+                        '/venue/${venue.id}/review',
+                        extra: venue.name,
+                      ),
+                      icon: const Icon(Icons.edit_outlined, size: 16),
+                      label: const Text('Yorum Yaz'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                BlocBuilder<ReviewBloc, ReviewState>(
+                  builder: (context, state) {
+                    if (state is ReviewLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (state is ReviewsLoaded) {
+                      if (state.reviews.isEmpty) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          child: Text(
+                            'Henüz yorum yok. İlk yorumu sen yaz!',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        );
+                      }
+                      return Column(
+                        children: state.reviews
+                            .take(5)
+                            .map((r) => _ReviewCard(review: r))
+                            .toList(),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+
                 const SizedBox(height: 32),
               ],
             ),
@@ -437,6 +497,51 @@ class _InfoRow extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+class _ReviewCard extends StatelessWidget {
+  final ReviewModel review;
+  const _ReviewCard({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Row(
+                  children: List.generate(5, (i) => Icon(
+                    i < review.rating ? Icons.star_rounded : Icons.star_border_rounded,
+                    size: 16,
+                    color: Colors.amber,
+                  )),
+                ),
+                const Spacer(),
+                Text(
+                  _formatDate(review.createdAt),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(review.body, style: theme.textTheme.bodyMedium),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}.${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 }
 

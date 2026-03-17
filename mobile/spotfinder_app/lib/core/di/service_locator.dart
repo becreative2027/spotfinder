@@ -3,6 +3,7 @@ import 'package:spotfinder_app/features/auth/data/repositories/auth_repository.d
 import 'package:spotfinder_app/features/explore/data/repositories/search_repository.dart';
 import 'package:spotfinder_app/features/explore/data/repositories/venue_repository.dart';
 import 'package:spotfinder_app/features/favorites/data/repositories/favorite_repository.dart';
+import 'package:spotfinder_app/features/reviews/data/repositories/review_repository.dart';
 
 /// Minimal service locator — no external DI package required.
 /// Repositories and services are created as static singletons.
@@ -28,4 +29,6 @@ class ServiceLocator {
   static final SearchRepository searchRepository = SearchRepository(dio: dio);
 
   static final FavoriteRepository favoriteRepository = FavoriteRepository(dio: dio);
+
+  static final ReviewRepository reviewRepository = ReviewRepository(dio: dio);
 }
