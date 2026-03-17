@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:spotfinder_app/features/auth/data/repositories/auth_repository.dart';
+import 'package:spotfinder_app/features/explore/data/repositories/search_repository.dart';
+import 'package:spotfinder_app/features/explore/data/repositories/venue_repository.dart';
+import 'package:spotfinder_app/features/favorites/data/repositories/favorite_repository.dart';
 
 /// Minimal service locator — no external DI package required.
 /// Repositories and services are created as static singletons.
-/// Replace with get_it or injectable in later iterations if needed.
 class ServiceLocator {
   ServiceLocator._();
 
@@ -19,6 +21,11 @@ class ServiceLocator {
     ),
   );
 
-  static final AuthRepository authRepository =
-      AuthRepository(dio: dio);
+  static final AuthRepository authRepository = AuthRepository(dio: dio);
+
+  static final VenueRepository venueRepository = VenueRepository(dio: dio);
+
+  static final SearchRepository searchRepository = SearchRepository(dio: dio);
+
+  static final FavoriteRepository favoriteRepository = FavoriteRepository(dio: dio);
 }
