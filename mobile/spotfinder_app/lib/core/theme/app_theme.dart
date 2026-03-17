@@ -12,7 +12,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      fontFamily: 'Poppins',
+      // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
       scaffoldBackgroundColor: Colors.white,
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
@@ -20,7 +20,7 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
-          fontFamily: 'Poppins',
+          // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: Colors.black87,
@@ -35,7 +35,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -51,7 +51,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontSize: 15,
             fontWeight: FontWeight.w500,
           ),
@@ -61,7 +61,7 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: _primaryColor,
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -93,67 +93,67 @@ class AppTheme {
           borderSide: const BorderSide(color: Colors.red, width: 1.5),
         ),
         labelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
           fontSize: 14,
           color: Colors.black54,
         ),
         hintStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
           fontSize: 14,
           color: Colors.black38,
         ),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w700,
             color: Colors.black87),
         displayMedium: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w700,
             color: Colors.black87),
         displaySmall: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w600,
             color: Colors.black87),
         headlineLarge: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w700,
             color: Colors.black87),
         headlineMedium: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w600,
             color: Colors.black87),
         headlineSmall: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w600,
             color: Colors.black87),
         titleLarge: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w600,
             color: Colors.black87),
         titleMedium: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w500,
             color: Colors.black87),
         titleSmall: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w500,
             color: Colors.black87),
         bodyLarge: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w400,
             color: Colors.black87),
         bodyMedium: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w400,
             color: Colors.black87),
         bodySmall: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w400,
             color: Colors.black54),
         labelLarge: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w500,
             color: Colors.black87),
       ),
@@ -169,7 +169,7 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
-      fontFamily: 'Poppins',
+      // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
       scaffoldBackgroundColor: const Color(0xFF121212),
       appBarTheme: const AppBarTheme(
         backgroundColor: Color(0xFF1E1E1E),
@@ -177,7 +177,7 @@ class AppTheme {
         elevation: 0,
         centerTitle: true,
         titleTextStyle: TextStyle(
-          fontFamily: 'Poppins',
+          // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: Colors.white,
@@ -192,7 +192,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -208,7 +208,7 @@ class AppTheme {
             borderRadius: BorderRadius.circular(12),
           ),
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontSize: 15,
             fontWeight: FontWeight.w500,
           ),
@@ -218,7 +218,7 @@ class AppTheme {
         style: TextButton.styleFrom(
           foregroundColor: const Color(0xFF9C94FF),
           textStyle: const TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontSize: 14,
             fontWeight: FontWeight.w500,
           ),
@@ -250,67 +250,67 @@ class AppTheme {
           borderSide: const BorderSide(color: Colors.redAccent, width: 1.5),
         ),
         labelStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
           fontSize: 14,
           color: Colors.white54,
         ),
         hintStyle: const TextStyle(
-          fontFamily: 'Poppins',
+          // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
           fontSize: 14,
           color: Colors.white38,
         ),
       ),
       textTheme: const TextTheme(
         displayLarge: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w700,
             color: Colors.white),
         displayMedium: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w700,
             color: Colors.white),
         displaySmall: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w600,
             color: Colors.white),
         headlineLarge: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w700,
             color: Colors.white),
         headlineMedium: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w600,
             color: Colors.white),
         headlineSmall: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w600,
             color: Colors.white),
         titleLarge: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w600,
             color: Colors.white),
         titleMedium: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w500,
             color: Colors.white),
         titleSmall: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w500,
             color: Colors.white),
         bodyLarge: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w400,
             color: Colors.white),
         bodyMedium: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w400,
             color: Colors.white),
         bodySmall: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w400,
             color: Colors.white70),
         labelLarge: TextStyle(
-            fontFamily: 'Poppins',
+            // fontFamily: 'Poppins', // assets/fonts/ eklenince aktif et
             fontWeight: FontWeight.w500,
             color: Colors.white),
       ),
