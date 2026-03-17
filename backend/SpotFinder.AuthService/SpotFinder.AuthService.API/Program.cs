@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SpotFinder.AuthService.API.Middleware;
+using SpotFinder.AuthService.Business.Behaviors;
+using SpotFinder.AuthService.Business.Commands;
 using SpotFinder.AuthService.Business.Services;
 using SpotFinder.AuthService.Data.Context;
 using SpotFinder.AuthService.Data.Repositories;
@@ -19,6 +21,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
 builder.Services.AddScoped<IOtpCodeRepository, OtpCodeRepository>();
+builder.Services.AddScoped<IUserInteractionRepository, UserInteractionRepository>();
 
 // Business Services
 builder.Services.AddScoped<IJwtService, JwtService>();
@@ -36,7 +39,10 @@ builder.Services.AddHttpClient("AppleAuth");
 
 // MediatR
 builder.Services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(typeof(SpotFinder.AuthService.Business.Commands.RegisterCommand).Assembly));
+{
+    cfg.RegisterServicesFromAssembly(typeof(RegisterCommand).Assembly);
+    cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+});
 
 // FluentValidation
 builder.Services.AddValidatorsFromAssembly(typeof(SpotFinder.AuthService.Business.Commands.RegisterCommand).Assembly);
@@ -61,7 +67,9 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidAudience = jwtSettings["Audience"],
         ValidateLifetime = true,
-        ClockSkew = TimeSpan.Zero
+        ClockSkew = TimeSpan.Zero,
+        NameClaimType = System.Security.Claims.ClaimTypes.NameIdentifier,
+        RoleClaimType = System.Security.Claims.ClaimTypes.Role
     };
 });
 

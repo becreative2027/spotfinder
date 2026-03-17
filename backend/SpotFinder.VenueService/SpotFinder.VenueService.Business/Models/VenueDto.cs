@@ -14,6 +14,7 @@ public record VenueDto(
     int ReviewCount,
     bool IsActive,
     DateTime CreatedAt,
+    string ShareUrl,
     IEnumerable<VenuePhotoDto> Photos,
     IEnumerable<ConceptTagDto> ConceptTags
 );

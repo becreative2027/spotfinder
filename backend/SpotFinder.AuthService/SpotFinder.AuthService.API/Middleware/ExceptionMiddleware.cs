@@ -1,3 +1,4 @@
+using FluentValidation;
 using System.Net;
 using System.Text.Json;
 
@@ -19,6 +20,13 @@ public class ExceptionMiddleware
         try
         {
             await _next(context);
+        }
+        catch (ValidationException ex)
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
+            context.Response.ContentType = "application/json";
+            var errors = ex.Errors.Select(e => new { field = e.PropertyName, message = e.ErrorMessage });
+            await context.Response.WriteAsync(JsonSerializer.Serialize(new { errors }));
         }
         catch (Exception ex)
         {
