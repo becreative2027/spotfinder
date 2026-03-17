@@ -21,6 +21,7 @@ public class GetVenueByIdQueryHandler : IRequestHandler<GetVenueByIdQuery, Venue
             v.Address, v.ParkingStatus,
             v.Lat, v.Lng,
             v.AverageRating, v.ReviewCount, v.IsActive, v.CreatedAt,
+            $"spotfinder://venue/{v.Id}",
             v.Photos.Select(p => new VenuePhotoDto(p.Id, p.Url, p.IsMenuPhoto, p.DisplayOrder)),
             v.VenueConcepts.Select(vc => new ConceptTagDto(vc.ConceptTag.Id, vc.ConceptTag.NameTr, vc.ConceptTag.NameEn, vc.ConceptTag.IsSystem, vc.ConceptTag.IsActive))
         );
