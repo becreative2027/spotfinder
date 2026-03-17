@@ -6,6 +6,7 @@ import 'package:spotfinder_app/core/router/app_router.dart';
 import 'package:spotfinder_app/core/theme/app_theme.dart';
 import 'package:spotfinder_app/core/di/service_locator.dart';
 import 'package:spotfinder_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:spotfinder_app/features/explore/presentation/bloc/search_bloc.dart';
 import 'package:spotfinder_app/features/favorites/presentation/bloc/favorite_bloc.dart';
 
 class SpotFinderApp extends StatelessWidget {
@@ -17,6 +18,13 @@ class SpotFinderApp extends StatelessWidget {
       providers: [
         BlocProvider(
           create: (_) => AuthBloc(authRepository: ServiceLocator.authRepository),
+        ),
+        // SearchBloc global — hem ShellRoute içinde hem /search ekranında erişilebilir
+        BlocProvider(
+          create: (_) => SearchBloc(
+            searchRepository: ServiceLocator.searchRepository,
+            venueRepository: ServiceLocator.venueRepository,
+          ),
         ),
         BlocProvider(
           create: (_) => FavoriteBloc(

@@ -6,7 +6,6 @@ import 'package:spotfinder_app/features/auth/presentation/screens/onboarding_scr
 import 'package:spotfinder_app/features/auth/presentation/screens/login_screen.dart';
 import 'package:spotfinder_app/features/auth/presentation/screens/register_screen.dart';
 import 'package:spotfinder_app/features/auth/presentation/screens/otp_screen.dart';
-import 'package:spotfinder_app/features/explore/presentation/bloc/search_bloc.dart';
 import 'package:spotfinder_app/features/explore/presentation/bloc/venue_bloc.dart';
 import 'package:spotfinder_app/features/explore/presentation/screens/home_screen.dart';
 import 'package:spotfinder_app/features/explore/presentation/screens/explore_screen.dart';
@@ -45,21 +44,11 @@ final GoRouter appRouter = GoRouter(
 
     // ─── Shell: Bottom Navigation ──────────────────────────────────────────
     ShellRoute(
-      builder: (context, state, child) => MultiBlocProvider(
-        providers: [
-          BlocProvider(
-            create: (_) => VenueBloc(
-              searchRepository: ServiceLocator.searchRepository,
-              venueRepository: ServiceLocator.venueRepository,
-            ),
-          ),
-          BlocProvider(
-            create: (_) => SearchBloc(
-              searchRepository: ServiceLocator.searchRepository,
-              venueRepository: ServiceLocator.venueRepository,
-            ),
-          ),
-        ],
+      builder: (context, state, child) => BlocProvider(
+        create: (_) => VenueBloc(
+          searchRepository: ServiceLocator.searchRepository,
+          venueRepository: ServiceLocator.venueRepository,
+        ),
         child: MainShell(child: child),
       ),
       routes: [
