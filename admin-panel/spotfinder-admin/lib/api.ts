@@ -1,8 +1,8 @@
 import { getToken, removeToken } from './auth';
 
-const AUTH_API = process.env.NEXT_PUBLIC_AUTH_API || 'http://localhost:5001';
-const VENUE_API = process.env.NEXT_PUBLIC_VENUE_API || 'http://localhost:5002';
-const REVIEW_API = process.env.NEXT_PUBLIC_REVIEW_API || 'http://localhost:5004';
+const AUTH_API = process.env.NEXT_PUBLIC_AUTH_API || 'https://spotfinder-auth-service.onrender.com';
+const VENUE_API = process.env.NEXT_PUBLIC_VENUE_API || 'https://spotfinder-venue-service.onrender.com';
+const REVIEW_API = process.env.NEXT_PUBLIC_REVIEW_API || 'https://spotfinder-review-service.onrender.com';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
