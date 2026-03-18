@@ -58,11 +58,21 @@ builder.Services.AddControllers();
 
 // CORS — origins loaded from config (Cors:AllowedOrigins)
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-    ?? new[] { "http://localhost:3000" };
+    ?? Array.Empty<string>();
+var corsOrigins = allowedOrigins
+    .Concat(new[]
+    {
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "https://spotfinder-admin.vercel.app",
+        "https://spotfinder-panel.vercel.app"
+    })
+    .Distinct()
+    .ToArray();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAdminPanel", policy =>
-        policy.WithOrigins(allowedOrigins)
+        policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod());
 });
