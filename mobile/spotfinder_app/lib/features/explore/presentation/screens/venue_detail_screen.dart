@@ -495,6 +495,7 @@ class _FullscreenPhotoViewer extends StatefulWidget {
 class _FullscreenPhotoViewerState extends State<_FullscreenPhotoViewer> {
   late PageController _pageController;
   late int _currentIndex;
+  bool _isZoomed = false;
 
   @override
   void initState() {
@@ -523,18 +524,30 @@ class _FullscreenPhotoViewerState extends State<_FullscreenPhotoViewer> {
       ),
       body: PageView.builder(
         controller: _pageController,
-        onPageChanged: (i) => setState(() => _currentIndex = i),
+        // Zoom'dayken sayfa geçişini engelle — InteractiveViewer pan alsın
+        physics: _isZoomed
+            ? const NeverScrollableScrollPhysics()
+            : const PageScrollPhysics(),
+        onPageChanged: (i) => setState(() {
+          _currentIndex = i;
+          _isZoomed = false; // Yeni sayfa her zaman normal zoom ile başlar
+        }),
         itemCount: widget.photos.length,
-        itemBuilder: (_, index) => _ZoomablePhoto(url: widget.photos[index].url),
+        itemBuilder: (_, index) => _ZoomablePhoto(
+          url: widget.photos[index].url,
+          onZoomChanged: (zoomed) => setState(() => _isZoomed = zoomed),
+        ),
       ),
     );
   }
 }
 
 /// A single zoomable photo that supports pinch-to-zoom and animated double-tap-to-zoom.
+/// [onZoomChanged] is called when the zoom state crosses the 1x threshold.
 class _ZoomablePhoto extends StatefulWidget {
   final String url;
-  const _ZoomablePhoto({required this.url});
+  final ValueChanged<bool>? onZoomChanged;
+  const _ZoomablePhoto({required this.url, this.onZoomChanged});
 
   @override
   State<_ZoomablePhoto> createState() => _ZoomablePhotoState();
@@ -546,6 +559,7 @@ class _ZoomablePhotoState extends State<_ZoomablePhoto>
   TapDownDetails? _doubleTapDetails;
   late final AnimationController _animController;
   Animation<Matrix4>? _animation;
+  bool _wasZoomed = false;
 
   @override
   void initState() {
@@ -554,12 +568,25 @@ class _ZoomablePhotoState extends State<_ZoomablePhoto>
       vsync: this,
       duration: const Duration(milliseconds: 280),
     )..addListener(() {
-        if (_animation != null) _controller.value = _animation!.value;
+        if (_animation != null) {
+          _controller.value = _animation!.value;
+        }
       });
+    // Pinch-zoom sırasında da zoom durumunu bildir
+    _controller.addListener(_notifyZoomChange);
+  }
+
+  void _notifyZoomChange() {
+    final isZoomed = _controller.value.getMaxScaleOnAxis() > 1.01;
+    if (isZoomed != _wasZoomed) {
+      _wasZoomed = isZoomed;
+      widget.onZoomChanged?.call(isZoomed);
+    }
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_notifyZoomChange);
     _animController.dispose();
     _controller.dispose();
     super.dispose();
@@ -593,6 +620,8 @@ class _ZoomablePhotoState extends State<_ZoomablePhoto>
         transformationController: _controller,
         minScale: 1.0,
         maxScale: 4.0,
+        panEnabled: true,
+        clipBehavior: Clip.none,
         child: Center(
           child: CachedNetworkImage(
             imageUrl: widget.url,
