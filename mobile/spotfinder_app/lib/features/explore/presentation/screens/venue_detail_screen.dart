@@ -557,9 +557,9 @@ class _ZoomablePhotoState extends State<_ZoomablePhoto> {
     }
     final position = _doubleTapDetails?.localPosition ?? Offset.zero;
     const double scale = 2.5;
-    _controller.value = Matrix4.identity()
-      ..translateByDouble(-position.dx * (scale - 1), -position.dy * (scale - 1), 0)
-      ..scaleByDouble(scale);
+    _controller.value =
+        Matrix4.translationValues(-position.dx * (scale - 1), -position.dy * (scale - 1), 0) *
+        Matrix4.diagonal3Values(scale, scale, 1.0);
   }
 
   @override
