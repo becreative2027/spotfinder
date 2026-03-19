@@ -11,7 +11,8 @@ public record SearchVenuesQuery(
     IEnumerable<int>? ConceptTagIds,
     string SortBy = "rating",
     int Page = 1,
-    int PageSize = 20) : IRequest<PagedResult<VenueSummaryDto>>;
+    int PageSize = 20,
+    string? NameQuery = null) : IRequest<PagedResult<VenueSummaryDto>>;
 
 public class SearchVenuesQueryHandler : IRequestHandler<SearchVenuesQuery, PagedResult<VenueSummaryDto>>
 {
@@ -29,6 +30,7 @@ public class SearchVenuesQueryHandler : IRequestHandler<SearchVenuesQuery, Paged
             sortBy,
             request.Page,
             request.PageSize,
+            request.NameQuery,
             ct);
 
         var dtos = items.Select(MapToDto);

@@ -531,7 +531,7 @@ class _FullscreenPhotoViewerState extends State<_FullscreenPhotoViewer> {
   }
 }
 
-/// A single zoomable photo that supports pinch-to-zoom and double-tap-to-zoom.
+/// A single zoomable photo that supports pinch-to-zoom and animated double-tap-to-zoom.
 class _ZoomablePhoto extends StatefulWidget {
   final String url;
   const _ZoomablePhoto({required this.url});
@@ -540,26 +540,48 @@ class _ZoomablePhoto extends StatefulWidget {
   State<_ZoomablePhoto> createState() => _ZoomablePhotoState();
 }
 
-class _ZoomablePhotoState extends State<_ZoomablePhoto> {
+class _ZoomablePhotoState extends State<_ZoomablePhoto>
+    with SingleTickerProviderStateMixin {
   final TransformationController _controller = TransformationController();
   TapDownDetails? _doubleTapDetails;
+  late final AnimationController _animController;
+  Animation<Matrix4>? _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    )..addListener(() {
+        if (_animation != null) _controller.value = _animation!.value;
+      });
+  }
 
   @override
   void dispose() {
+    _animController.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   void _onDoubleTap() {
+    _animController.stop();
+    final Matrix4 end;
     if (_controller.value != Matrix4.identity()) {
-      _controller.value = Matrix4.identity();
-      return;
+      end = Matrix4.identity();
+    } else {
+      final position = _doubleTapDetails?.localPosition ?? Offset.zero;
+      const double scale = 2.5;
+      end =
+          Matrix4.translationValues(
+              -position.dx * (scale - 1), -position.dy * (scale - 1), 0) *
+          Matrix4.diagonal3Values(scale, scale, 1.0);
     }
-    final position = _doubleTapDetails?.localPosition ?? Offset.zero;
-    const double scale = 2.5;
-    _controller.value =
-        Matrix4.translationValues(-position.dx * (scale - 1), -position.dy * (scale - 1), 0) *
-        Matrix4.diagonal3Values(scale, scale, 1.0);
+    _animation = _Matrix4Tween(begin: _controller.value.clone(), end: end)
+        .animate(CurvedAnimation(
+            parent: _animController, curve: Curves.easeInOutCubic));
+    _animController.forward(from: 0);
   }
 
   @override
@@ -587,6 +609,20 @@ class _ZoomablePhotoState extends State<_ZoomablePhoto> {
         ),
       ),
     );
+  }
+}
+
+/// Linear interpolation across all 16 Matrix4 storage values.
+/// Works correctly for pure scale + translate transforms (no rotation).
+class _Matrix4Tween extends Tween<Matrix4> {
+  _Matrix4Tween({required super.begin, required super.end});
+
+  @override
+  Matrix4 lerp(double t) {
+    final b = begin!.storage;
+    final e = end!.storage;
+    return Matrix4.fromList(
+        List<double>.generate(16, (i) => b[i] + (e[i] - b[i]) * t));
   }
 }
 

@@ -21,6 +21,7 @@ public class SearchController : ControllerBase
         [FromQuery] string sortBy = "rating",
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
+        [FromQuery] string? nameQuery = null,
         CancellationToken ct = default)
     {
         IEnumerable<int>? tagIds = null;
@@ -34,7 +35,7 @@ public class SearchController : ControllerBase
         }
 
         var result = await _mediator.Send(
-            new SearchVenuesQuery(districtId, tagIds, sortBy, page, pageSize), ct);
+            new SearchVenuesQuery(districtId, tagIds, sortBy, page, pageSize, nameQuery), ct);
 
         return Ok(result);
     }
