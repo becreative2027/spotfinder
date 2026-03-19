@@ -357,6 +357,22 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 16),
+
+                    // Guest continue
+                    Center(
+                      child: TextButton(
+                        onPressed: () => context.go('/home'),
+                        child: Text(
+                          'Misafir olarak devam et',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontSize: 13,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

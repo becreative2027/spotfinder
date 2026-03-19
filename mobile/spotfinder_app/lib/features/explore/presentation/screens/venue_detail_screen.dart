@@ -8,6 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:spotfinder_app/core/di/service_locator.dart';
 import 'package:spotfinder_app/features/explore/data/models/venue_model.dart';
 import 'package:spotfinder_app/features/explore/presentation/bloc/venue_bloc.dart';
+import 'package:spotfinder_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:spotfinder_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:spotfinder_app/features/favorites/presentation/bloc/favorite_bloc.dart';
 import 'package:spotfinder_app/features/reviews/data/models/review_model.dart';
 import 'package:spotfinder_app/features/reviews/presentation/bloc/review_bloc.dart';
@@ -103,8 +105,23 @@ class _DetailBody extends StatelessWidget {
                     isFav ? Icons.favorite : Icons.favorite_border,
                     color: isFav ? Colors.red : Colors.white,
                   ),
-                  onPressed: () =>
-                      context.read<FavoriteBloc>().add(ToggleFavorite(venue.id)),
+                  onPressed: () {
+                    final authState = context.read<AuthBloc>().state;
+                    if (authState is! AuthAuthenticated) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Favorilere eklemek için giriş yapmalısınız.'),
+                          action: SnackBarAction(
+                            label: 'Giriş Yap',
+                            onPressed: () => context.push('/login'),
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
+                    context.read<FavoriteBloc>().add(ToggleFavorite(venue.id));
+                  },
                 );
               },
             ),
@@ -277,18 +294,21 @@ class _DetailBody extends StatelessWidget {
                       itemCount: menuPhotos.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 12),
                       itemBuilder: (context, index) {
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: CachedNetworkImage(
-                            imageUrl: menuPhotos[index].url,
-                            width: 140,
-                            height: 180,
-                            fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) => Container(
+                        return GestureDetector(
+                          onTap: () => _openFullscreen(context, menuPhotos, index),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: CachedNetworkImage(
+                              imageUrl: menuPhotos[index].url,
                               width: 140,
-                              color: colorScheme.surfaceVariant,
-                              child: Icon(Icons.broken_image_outlined,
-                                  color: colorScheme.onSurfaceVariant),
+                              height: 180,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) => Container(
+                                width: 140,
+                                color: colorScheme.surfaceVariant,
+                                child: Icon(Icons.broken_image_outlined,
+                                    color: colorScheme.onSurfaceVariant),
+                              ),
                             ),
                           ),
                         );
@@ -401,13 +421,16 @@ class _PhotoGalleryState extends State<_PhotoGallery> {
           controller: _pageController,
           onPageChanged: widget.onChanged,
           itemCount: widget.photos.length,
-          itemBuilder: (_, index) => CachedNetworkImage(
-            imageUrl: widget.photos[index].url,
-            fit: BoxFit.cover,
-            placeholder: (_, __) => Container(color: Colors.grey[300]),
-            errorWidget: (_, __, ___) => Container(
-              color: Colors.grey[300],
-              child: const Icon(Icons.broken_image_outlined, size: 48),
+          itemBuilder: (_, index) => GestureDetector(
+            onTap: () => _openFullscreen(context, widget.photos, widget.currentIndex),
+            child: CachedNetworkImage(
+              imageUrl: widget.photos[index].url,
+              fit: BoxFit.cover,
+              placeholder: (_, __) => Container(color: Colors.grey[300]),
+              errorWidget: (_, __, ___) => Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.broken_image_outlined, size: 48),
+              ),
             ),
           ),
         ),
@@ -434,8 +457,172 @@ class _PhotoGalleryState extends State<_PhotoGallery> {
               }),
             ),
           ),
+        // Fullscreen hint icon
+        Positioned(
+          top: 12,
+          right: 12,
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.fullscreen, color: Colors.white, size: 20),
+          ),
+        ),
       ],
     );
+  }
+}
+
+void _openFullscreen(BuildContext context, List<VenuePhotoModel> photos, int initialIndex) {
+  Navigator.of(context).push(MaterialPageRoute(
+    fullscreenDialog: true,
+    builder: (_) => _FullscreenPhotoViewer(photos: photos, initialIndex: initialIndex),
+  ));
+}
+
+class _FullscreenPhotoViewer extends StatefulWidget {
+  final List<VenuePhotoModel> photos;
+  final int initialIndex;
+
+  const _FullscreenPhotoViewer({required this.photos, required this.initialIndex});
+
+  @override
+  State<_FullscreenPhotoViewer> createState() => _FullscreenPhotoViewerState();
+}
+
+class _FullscreenPhotoViewerState extends State<_FullscreenPhotoViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(
+          '${_currentIndex + 1} / ${widget.photos.length}',
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
+      body: PageView.builder(
+        controller: _pageController,
+        onPageChanged: (i) => setState(() => _currentIndex = i),
+        itemCount: widget.photos.length,
+        itemBuilder: (_, index) => _ZoomablePhoto(url: widget.photos[index].url),
+      ),
+    );
+  }
+}
+
+/// A single zoomable photo that supports pinch-to-zoom and animated double-tap-to-zoom.
+class _ZoomablePhoto extends StatefulWidget {
+  final String url;
+  const _ZoomablePhoto({required this.url});
+
+  @override
+  State<_ZoomablePhoto> createState() => _ZoomablePhotoState();
+}
+
+class _ZoomablePhotoState extends State<_ZoomablePhoto>
+    with SingleTickerProviderStateMixin {
+  final TransformationController _controller = TransformationController();
+  TapDownDetails? _doubleTapDetails;
+  late final AnimationController _animController;
+  Animation<Matrix4>? _animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 280),
+    )..addListener(() {
+        if (_animation != null) _controller.value = _animation!.value;
+      });
+  }
+
+  @override
+  void dispose() {
+    _animController.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onDoubleTap() {
+    _animController.stop();
+    final Matrix4 end;
+    if (_controller.value != Matrix4.identity()) {
+      end = Matrix4.identity();
+    } else {
+      final position = _doubleTapDetails?.localPosition ?? Offset.zero;
+      const double scale = 2.5;
+      end =
+          Matrix4.translationValues(
+              -position.dx * (scale - 1), -position.dy * (scale - 1), 0) *
+          Matrix4.diagonal3Values(scale, scale, 1.0);
+    }
+    _animation = _Matrix4Tween(begin: _controller.value.clone(), end: end)
+        .animate(CurvedAnimation(
+            parent: _animController, curve: Curves.easeInOutCubic));
+    _animController.forward(from: 0);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onDoubleTapDown: (d) => _doubleTapDetails = d,
+      onDoubleTap: _onDoubleTap,
+      child: InteractiveViewer(
+        transformationController: _controller,
+        minScale: 1.0,
+        maxScale: 4.0,
+        child: Center(
+          child: CachedNetworkImage(
+            imageUrl: widget.url,
+            fit: BoxFit.contain,
+            placeholder: (_, __) => const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+            errorWidget: (_, __, ___) => const Icon(
+              Icons.broken_image_outlined,
+              color: Colors.white54,
+              size: 64,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Linear interpolation across all 16 Matrix4 storage values.
+/// Works correctly for pure scale + translate transforms (no rotation).
+class _Matrix4Tween extends Tween<Matrix4> {
+  _Matrix4Tween({required super.begin, required super.end});
+
+  @override
+  Matrix4 lerp(double t) {
+    final b = begin!.storage;
+    final e = end!.storage;
+    return Matrix4.fromList(
+        List<double>.generate(16, (i) => b[i] + (e[i] - b[i]) * t));
   }
 }
 

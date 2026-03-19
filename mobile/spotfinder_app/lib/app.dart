@@ -6,6 +6,7 @@ import 'package:spotfinder_app/core/router/app_router.dart';
 import 'package:spotfinder_app/core/theme/app_theme.dart';
 import 'package:spotfinder_app/core/di/service_locator.dart';
 import 'package:spotfinder_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:spotfinder_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:spotfinder_app/features/explore/presentation/bloc/search_bloc.dart';
 import 'package:spotfinder_app/features/favorites/presentation/bloc/favorite_bloc.dart';
 import 'package:spotfinder_app/features/settings/presentation/bloc/settings_bloc.dart';
@@ -36,7 +37,13 @@ class SpotFinderApp extends StatelessWidget {
           create: (_) => SettingsBloc()..add(const LoadSettings()),
         ),
       ],
-      child: BlocBuilder<SettingsBloc, SettingsState>(
+      child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          // Reload favorites whenever auth state changes so profile/favorites
+          // counts stay in sync without the user manually visiting the tab.
+          context.read<FavoriteBloc>().add(const LoadFavorites());
+        },
+        child: BlocBuilder<SettingsBloc, SettingsState>(
         buildWhen: (prev, curr) =>
             prev.locale != curr.locale || prev.themeMode != curr.themeMode,
         builder: (context, settings) {
@@ -60,6 +67,7 @@ class SpotFinderApp extends StatelessWidget {
             locale: settings.locale,
           );
         },
+        ),
       ),
     );
   }

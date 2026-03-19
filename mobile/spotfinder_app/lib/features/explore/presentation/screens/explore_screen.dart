@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:spotfinder_app/features/explore/data/models/concept_tag_model.dart';
 import 'package:spotfinder_app/features/explore/data/models/district_model.dart';
 import 'package:spotfinder_app/features/explore/presentation/bloc/search_bloc.dart';
-import 'package:spotfinder_app/shared/widgets/concept_tag_chip.dart';
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -17,10 +16,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
   int? _selectedDistrictId;
   final Set<int> _selectedTagIds = {};
   String _sortBy = 'rating';
+  final TextEditingController _nameController = TextEditingController();
 
   // State geçişlerinde kaybolmaması için district/tag listelerini cache'le
   List<DistrictModel> _cachedDistricts = [];
   List<ConceptTagModel> _cachedTags = [];
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -38,12 +44,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   void _applyFilters() {
-    context.read<SearchBloc>().add(FilterChanged(
+    final nameQuery = _nameController.text.trim().isEmpty ? null : _nameController.text.trim();
+    context.read<SearchBloc>().add(SearchVenues(
+          nameQuery: nameQuery,
           districtId: _selectedDistrictId,
           tagIds: _selectedTagIds.toList(),
           sortBy: _sortBy,
         ));
-    context.read<SearchBloc>().add(const SearchVenues());
     context.push('/search');
   }
 
@@ -52,7 +59,86 @@ class _ExploreScreenState extends State<ExploreScreen> {
       _selectedDistrictId = null;
       _selectedTagIds.clear();
       _sortBy = 'rating';
+      _nameController.clear();
     });
+  }
+
+  void _showConceptTagBottomSheet(BuildContext context, List<ConceptTagModel> tags) {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return DraggableScrollableSheet(
+            initialChildSize: 0.6,
+            maxChildSize: 0.9,
+            minChildSize: 0.4,
+            expand: false,
+            builder: (_, scrollController) => Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+                  child: Row(
+                    children: [
+                      Text('Konsept Seç',
+                          style: theme.textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () {
+                          setState(() => _selectedTagIds.clear());
+                          setModalState(() {});
+                        },
+                        child: const Text('Temizle'),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    children: tags.map((tag) {
+                      final selected = _selectedTagIds.contains(tag.id);
+                      return CheckboxListTile(
+                        title: Text(tag.nameTr),
+                        value: selected,
+                        onChanged: (v) {
+                          setState(() {
+                            if (v == true) {
+                              _selectedTagIds.add(tag.id);
+                            } else {
+                              _selectedTagIds.remove(tag.id);
+                            }
+                          });
+                          setModalState(() {});
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text(_selectedTagIds.isEmpty
+                          ? 'Tamam'
+                          : 'Tamam (${_selectedTagIds.length} seçili)'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -115,6 +201,32 @@ class _ExploreScreenState extends State<ExploreScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // ─── Mekan Adı Araması ────────────────────────────────────
+                  Text(
+                    'Mekân Adı',
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(
+                      hintText: 'Mekân adı ile ara...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.4)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: colorScheme.outline.withOpacity(0.4)),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                    onSubmitted: (_) => _applyFilters(),
+                  ),
+
+                  const SizedBox(height: 28),
+
                   // ─── İlçe Seçimi ─────────────────────────────────────────
                   Text(
                     'İlçe',
@@ -153,46 +265,41 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   const SizedBox(height: 28),
 
                   // ─── Konsept Etiketleri ───────────────────────────────────
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Konsept',
-                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
-                      ),
-                      if (_selectedTagIds.isNotEmpty)
-                        Text(
-                          '${_selectedTagIds.length} seçili',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: colorScheme.primary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                    ],
+                  Text(
+                    'Konsept',
+                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 12),
-                  tags.isEmpty
-                      ? const Text('Konseptler yükleniyor...')
-                      : Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: tags.map((tag) {
-                            final isSelected = _selectedTagIds.contains(tag.id);
-                            return ConceptTagChip(
-                              tag: tag,
-                              isSelected: isSelected,
-                              onTap: () {
-                                setState(() {
-                                  if (isSelected) {
-                                    _selectedTagIds.remove(tag.id);
-                                  } else {
-                                    _selectedTagIds.add(tag.id);
-                                  }
-                                });
-                              },
-                            );
-                          }).toList(),
-                        ),
+                  GestureDetector(
+                    onTap: tags.isEmpty ? null : () => _showConceptTagBottomSheet(context, tags),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: colorScheme.outline.withOpacity(0.4)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              tags.isEmpty
+                                  ? 'Konseptler yükleniyor...'
+                                  : _selectedTagIds.isEmpty
+                                      ? 'Tüm Konseptler'
+                                      : '${_selectedTagIds.length} konsept seçili',
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: _selectedTagIds.isEmpty
+                                    ? colorScheme.onSurfaceVariant
+                                    : colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                          Icon(Icons.keyboard_arrow_down,
+                              color: colorScheme.onSurfaceVariant),
+                        ],
+                      ),
+                    ),
+                  ),
 
                   const SizedBox(height: 28),
 

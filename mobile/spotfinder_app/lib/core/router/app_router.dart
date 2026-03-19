@@ -68,14 +68,14 @@ final GoRouter appRouter = GoRouter(
           path: '/favorites',
           builder: (_, __) => const FavoritesScreen(),
         ),
-        GoRoute(
-          path: '/profile',
-          builder: (_, __) => const ProfileScreen(),
-        ),
       ],
     ),
 
     // ─── Full-screen routes (no bottom nav) ───────────────────────────────
+    GoRoute(
+      path: '/profile',
+      builder: (_, __) => const ProfileScreen(),
+    ),
     GoRoute(
       path: '/search',
       builder: (_, __) => const SearchResultsScreen(),
@@ -107,8 +107,8 @@ final GoRouter appRouter = GoRouter(
     ),
     GoRoute(
       path: '/settings',
-      builder: (_, __) => BlocProvider(
-        create: (_) => SettingsBloc()..add(const LoadSettings()),
+      builder: (context, __) => BlocProvider.value(
+        value: context.read<SettingsBloc>(),
         child: const SettingsScreen(),
       ),
     ),
