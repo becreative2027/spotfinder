@@ -24,7 +24,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Future<void> _loadVenueDetails(Set<String> venueIds) async {
-    if (venueIds.isEmpty) return;
+    if (venueIds.isEmpty) {
+      setState(() => _venues.clear());
+      return;
+    }
     setState(() {
       _isLoading = true;
       _error = null;

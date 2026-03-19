@@ -8,6 +8,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:spotfinder_app/core/di/service_locator.dart';
 import 'package:spotfinder_app/features/explore/data/models/venue_model.dart';
 import 'package:spotfinder_app/features/explore/presentation/bloc/venue_bloc.dart';
+import 'package:spotfinder_app/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:spotfinder_app/features/auth/presentation/bloc/auth_state.dart';
 import 'package:spotfinder_app/features/favorites/presentation/bloc/favorite_bloc.dart';
 import 'package:spotfinder_app/features/reviews/data/models/review_model.dart';
 import 'package:spotfinder_app/features/reviews/presentation/bloc/review_bloc.dart';
@@ -103,8 +105,23 @@ class _DetailBody extends StatelessWidget {
                     isFav ? Icons.favorite : Icons.favorite_border,
                     color: isFav ? Colors.red : Colors.white,
                   ),
-                  onPressed: () =>
-                      context.read<FavoriteBloc>().add(ToggleFavorite(venue.id)),
+                  onPressed: () {
+                    final authState = context.read<AuthBloc>().state;
+                    if (authState is! AuthAuthenticated) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Favorilere eklemek için giriş yapmalısınız.'),
+                          action: SnackBarAction(
+                            label: 'Giriş Yap',
+                            onPressed: () => context.push('/login'),
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
+                    context.read<FavoriteBloc>().add(ToggleFavorite(venue.id));
+                  },
                 );
               },
             ),
@@ -508,21 +525,63 @@ class _FullscreenPhotoViewerState extends State<_FullscreenPhotoViewer> {
         controller: _pageController,
         onPageChanged: (i) => setState(() => _currentIndex = i),
         itemCount: widget.photos.length,
-        itemBuilder: (_, index) => InteractiveViewer(
-          minScale: 1.0,
-          maxScale: 4.0,
-          child: Center(
-            child: CachedNetworkImage(
-              imageUrl: widget.photos[index].url,
-              fit: BoxFit.contain,
-              placeholder: (_, __) => const Center(
-                child: CircularProgressIndicator(color: Colors.white),
-              ),
-              errorWidget: (_, __, ___) => const Icon(
-                Icons.broken_image_outlined,
-                color: Colors.white54,
-                size: 64,
-              ),
+        itemBuilder: (_, index) => _ZoomablePhoto(url: widget.photos[index].url),
+      ),
+    );
+  }
+}
+
+/// A single zoomable photo that supports pinch-to-zoom and double-tap-to-zoom.
+class _ZoomablePhoto extends StatefulWidget {
+  final String url;
+  const _ZoomablePhoto({required this.url});
+
+  @override
+  State<_ZoomablePhoto> createState() => _ZoomablePhotoState();
+}
+
+class _ZoomablePhotoState extends State<_ZoomablePhoto> {
+  final TransformationController _controller = TransformationController();
+  TapDownDetails? _doubleTapDetails;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onDoubleTap() {
+    if (_controller.value != Matrix4.identity()) {
+      _controller.value = Matrix4.identity();
+      return;
+    }
+    final position = _doubleTapDetails?.localPosition ?? Offset.zero;
+    const double scale = 2.5;
+    _controller.value = Matrix4.identity()
+      ..translateByDouble(-position.dx * (scale - 1), -position.dy * (scale - 1), 0)
+      ..scaleByDouble(scale);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onDoubleTapDown: (d) => _doubleTapDetails = d,
+      onDoubleTap: _onDoubleTap,
+      child: InteractiveViewer(
+        transformationController: _controller,
+        minScale: 1.0,
+        maxScale: 4.0,
+        child: Center(
+          child: CachedNetworkImage(
+            imageUrl: widget.url,
+            fit: BoxFit.contain,
+            placeholder: (_, __) => const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+            errorWidget: (_, __, ___) => const Icon(
+              Icons.broken_image_outlined,
+              color: Colors.white54,
+              size: 64,
             ),
           ),
         ),

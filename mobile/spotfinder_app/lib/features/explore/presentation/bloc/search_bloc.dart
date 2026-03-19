@@ -35,9 +35,19 @@ class FilterChanged extends SearchEvent {
 
 class SearchVenues extends SearchEvent {
   final String? nameQuery;
-  const SearchVenues({this.nameQuery});
+  final int? districtId;
+  final List<int> tagIds;
+  final String sortBy;
+
+  const SearchVenues({
+    this.nameQuery,
+    this.districtId,
+    this.tagIds = const [],
+    this.sortBy = 'rating',
+  });
+
   @override
-  List<Object?> get props => [nameQuery];
+  List<Object?> get props => [nameQuery, districtId, tagIds, sortBy];
 }
 
 class LoadNextPage extends SearchEvent {
@@ -196,17 +206,11 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
     SearchVenues event,
     Emitter<SearchState> emit,
   ) async {
-    int? districtId;
-    List<int> tagIds = [];
-    String sortBy = 'rating';
-
-    if (state is FiltersLoaded) {
-      final f = state as FiltersLoaded;
-      districtId = f.selectedDistrictId;
-      tagIds = f.selectedTagIds;
-      sortBy = f.sortBy;
-    }
-
+    // Use filters from event directly — avoids depending on current BLoC state
+    // which may be SearchResultsLoaded (not FiltersLoaded) after a prior search.
+    final districtId = event.districtId;
+    final tagIds = event.tagIds;
+    final sortBy = event.sortBy;
     final nameQuery = event.nameQuery;
 
     emit(const SearchLoading());

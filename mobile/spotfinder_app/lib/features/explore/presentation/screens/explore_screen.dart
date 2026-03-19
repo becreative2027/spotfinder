@@ -44,13 +44,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
   }
 
   void _applyFilters() {
-    context.read<SearchBloc>().add(FilterChanged(
+    final nameQuery = _nameController.text.trim().isEmpty ? null : _nameController.text.trim();
+    context.read<SearchBloc>().add(SearchVenues(
+          nameQuery: nameQuery,
           districtId: _selectedDistrictId,
           tagIds: _selectedTagIds.toList(),
           sortBy: _sortBy,
         ));
-    final nameQuery = _nameController.text.trim().isEmpty ? null : _nameController.text.trim();
-    context.read<SearchBloc>().add(SearchVenues(nameQuery: nameQuery));
     context.push('/search');
   }
 
