@@ -34,7 +34,10 @@ class FilterChanged extends SearchEvent {
 }
 
 class SearchVenues extends SearchEvent {
-  const SearchVenues();
+  final String? nameQuery;
+  const SearchVenues({this.nameQuery});
+  @override
+  List<Object?> get props => [nameQuery];
 }
 
 class LoadNextPage extends SearchEvent {
@@ -104,6 +107,7 @@ class SearchResultsLoaded extends SearchState {
   final int? districtId;
   final List<int> tagIds;
   final String sortBy;
+  final String? nameQuery;
 
   const SearchResultsLoaded({
     required this.venues,
@@ -112,10 +116,11 @@ class SearchResultsLoaded extends SearchState {
     this.districtId,
     this.tagIds = const [],
     this.sortBy = 'rating',
+    this.nameQuery,
   });
 
   @override
-  List<Object?> get props => [venues, hasMore, currentPage, districtId, tagIds, sortBy];
+  List<Object?> get props => [venues, hasMore, currentPage, districtId, tagIds, sortBy, nameQuery];
 }
 
 class SearchLoadingMore extends SearchResultsLoaded {
@@ -126,6 +131,7 @@ class SearchLoadingMore extends SearchResultsLoaded {
     super.districtId,
     super.tagIds,
     super.sortBy,
+    super.nameQuery,
   });
 }
 
@@ -201,6 +207,8 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       sortBy = f.sortBy;
     }
 
+    final nameQuery = event.nameQuery;
+
     emit(const SearchLoading());
     try {
       final result = await searchRepository.search(
@@ -208,6 +216,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
         conceptTagIds: tagIds,
         sortBy: sortBy,
         page: 1,
+        nameQuery: nameQuery,
       );
       emit(SearchResultsLoaded(
         venues: result.items,
@@ -216,6 +225,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
         districtId: districtId,
         tagIds: tagIds,
         sortBy: sortBy,
+        nameQuery: nameQuery,
       ));
     } catch (e) {
       emit(const SearchError('Arama yapılamadı. Lütfen tekrar deneyin.'));
@@ -237,6 +247,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       districtId: current.districtId,
       tagIds: current.tagIds,
       sortBy: current.sortBy,
+      nameQuery: current.nameQuery,
     ));
 
     try {
@@ -246,6 +257,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
         conceptTagIds: current.tagIds,
         sortBy: current.sortBy,
         page: nextPage,
+        nameQuery: current.nameQuery,
       );
       emit(SearchResultsLoaded(
         venues: [...current.venues, ...result.items],
@@ -254,6 +266,7 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
         districtId: current.districtId,
         tagIds: current.tagIds,
         sortBy: current.sortBy,
+        nameQuery: current.nameQuery,
       ));
     } catch (e) {
       emit(current); // Hata durumunda önceki sonuçları koru

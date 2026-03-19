@@ -277,18 +277,21 @@ class _DetailBody extends StatelessWidget {
                       itemCount: menuPhotos.length,
                       separatorBuilder: (_, __) => const SizedBox(width: 12),
                       itemBuilder: (context, index) {
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: CachedNetworkImage(
-                            imageUrl: menuPhotos[index].url,
-                            width: 140,
-                            height: 180,
-                            fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) => Container(
+                        return GestureDetector(
+                          onTap: () => _openFullscreen(context, menuPhotos, index),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: CachedNetworkImage(
+                              imageUrl: menuPhotos[index].url,
                               width: 140,
-                              color: colorScheme.surfaceVariant,
-                              child: Icon(Icons.broken_image_outlined,
-                                  color: colorScheme.onSurfaceVariant),
+                              height: 180,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) => Container(
+                                width: 140,
+                                color: colorScheme.surfaceVariant,
+                                child: Icon(Icons.broken_image_outlined,
+                                    color: colorScheme.onSurfaceVariant),
+                              ),
                             ),
                           ),
                         );
@@ -401,13 +404,16 @@ class _PhotoGalleryState extends State<_PhotoGallery> {
           controller: _pageController,
           onPageChanged: widget.onChanged,
           itemCount: widget.photos.length,
-          itemBuilder: (_, index) => CachedNetworkImage(
-            imageUrl: widget.photos[index].url,
-            fit: BoxFit.cover,
-            placeholder: (_, __) => Container(color: Colors.grey[300]),
-            errorWidget: (_, __, ___) => Container(
-              color: Colors.grey[300],
-              child: const Icon(Icons.broken_image_outlined, size: 48),
+          itemBuilder: (_, index) => GestureDetector(
+            onTap: () => _openFullscreen(context, widget.photos, widget.currentIndex),
+            child: CachedNetworkImage(
+              imageUrl: widget.photos[index].url,
+              fit: BoxFit.cover,
+              placeholder: (_, __) => Container(color: Colors.grey[300]),
+              errorWidget: (_, __, ___) => Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.broken_image_outlined, size: 48),
+              ),
             ),
           ),
         ),
@@ -434,7 +440,93 @@ class _PhotoGalleryState extends State<_PhotoGallery> {
               }),
             ),
           ),
+        // Fullscreen hint icon
+        Positioned(
+          top: 12,
+          right: 12,
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.fullscreen, color: Colors.white, size: 20),
+          ),
+        ),
       ],
+    );
+  }
+}
+
+void _openFullscreen(BuildContext context, List<VenuePhotoModel> photos, int initialIndex) {
+  Navigator.of(context).push(MaterialPageRoute(
+    fullscreenDialog: true,
+    builder: (_) => _FullscreenPhotoViewer(photos: photos, initialIndex: initialIndex),
+  ));
+}
+
+class _FullscreenPhotoViewer extends StatefulWidget {
+  final List<VenuePhotoModel> photos;
+  final int initialIndex;
+
+  const _FullscreenPhotoViewer({required this.photos, required this.initialIndex});
+
+  @override
+  State<_FullscreenPhotoViewer> createState() => _FullscreenPhotoViewerState();
+}
+
+class _FullscreenPhotoViewerState extends State<_FullscreenPhotoViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(
+          '${_currentIndex + 1} / ${widget.photos.length}',
+          style: const TextStyle(color: Colors.white),
+        ),
+      ),
+      body: PageView.builder(
+        controller: _pageController,
+        onPageChanged: (i) => setState(() => _currentIndex = i),
+        itemCount: widget.photos.length,
+        itemBuilder: (_, index) => InteractiveViewer(
+          minScale: 1.0,
+          maxScale: 4.0,
+          child: Center(
+            child: CachedNetworkImage(
+              imageUrl: widget.photos[index].url,
+              fit: BoxFit.contain,
+              placeholder: (_, __) => const Center(
+                child: CircularProgressIndicator(color: Colors.white),
+              ),
+              errorWidget: (_, __, ___) => const Icon(
+                Icons.broken_image_outlined,
+                color: Colors.white54,
+                size: 64,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -26,6 +26,7 @@ class SearchRepository {
     String sortBy = 'rating',
     int page = 1,
     int pageSize = 20,
+    String? nameQuery,
   }) async {
     final query = <String, dynamic>{
       'sortBy': sortBy,
@@ -36,6 +37,7 @@ class SearchRepository {
     if (conceptTagIds != null && conceptTagIds.isNotEmpty) {
       query['conceptTagIds'] = conceptTagIds.join(',');
     }
+    if (nameQuery != null && nameQuery.isNotEmpty) query['name'] = nameQuery;
 
     final response = await _dio.get(
       '${ApiConstants.searchBaseUrl}/api/v1/search/venues',

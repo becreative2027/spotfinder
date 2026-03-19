@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:spotfinder_app/features/explore/data/models/concept_tag_model.dart';
 import 'package:spotfinder_app/features/explore/data/models/venue_model.dart';
 import 'package:spotfinder_app/features/explore/presentation/bloc/venue_bloc.dart';
 import 'package:spotfinder_app/features/explore/presentation/bloc/search_bloc.dart';
@@ -15,11 +16,18 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  List<ConceptTagModel> _cachedTags = [];
+
   @override
   void initState() {
     super.initState();
     context.read<VenueBloc>().add(const LoadFeaturedVenues(count: 10));
-    context.read<SearchBloc>().add(const LoadFilters());
+    final searchState = context.read<SearchBloc>().state;
+    if (searchState is FiltersLoaded && searchState.tags.isNotEmpty) {
+      _cachedTags = searchState.tags;
+    } else {
+      context.read<SearchBloc>().add(const LoadFilters());
+    }
   }
 
   @override
@@ -61,16 +69,19 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        Container(
-                          width: 42,
-                          height: 42,
-                          decoration: BoxDecoration(
-                            color: colorScheme.primaryContainer,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            Icons.person_outline,
-                            color: colorScheme.onPrimaryContainer,
+                        GestureDetector(
+                          onTap: () => context.push('/profile'),
+                          child: Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.person_outline,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
                           ),
                         ),
                       ],
@@ -109,49 +120,51 @@ class _HomeScreenState extends State<HomeScreen> {
 
             // ─── Konsept Etiketleri ───────────────────────────────────────
             SliverToBoxAdapter(
-              child: BlocBuilder<SearchBloc, SearchState>(
-                builder: (context, state) {
-                  if (state is! FiltersLoaded || state.tags.isEmpty) {
-                    return const SizedBox.shrink();
+              child: BlocListener<SearchBloc, SearchState>(
+                listener: (context, state) {
+                  if (state is FiltersLoaded && state.tags.isNotEmpty) {
+                    setState(() => _cachedTags = state.tags);
                   }
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
-                        child: Text(
-                          'Konsept Keşfet',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        height: 40,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          itemCount: state.tags.length,
-                          separatorBuilder: (_, __) => const SizedBox(width: 8),
-                          itemBuilder: (context, index) {
-                            final tag = state.tags[index];
-                            return ConceptTagChip(
-                              tag: tag,
-                              isSelected: false,
-                              onTap: () {
-                                context.read<SearchBloc>().add(FilterChanged(
-                                      tagIds: [tag.id],
-                                    ));
-                                context.read<SearchBloc>().add(const SearchVenues());
-                                context.push('/search');
-                              },
-                            );
-                          },
-                        ),
-                      ),
-                    ],
-                  );
                 },
+                child: _cachedTags.isEmpty
+                    ? const SizedBox.shrink()
+                    : Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+                            child: Text(
+                              'Konsept Keşfet',
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 40,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              itemCount: _cachedTags.length,
+                              separatorBuilder: (_, __) => const SizedBox(width: 8),
+                              itemBuilder: (context, index) {
+                                final tag = _cachedTags[index];
+                                return ConceptTagChip(
+                                  tag: tag,
+                                  isSelected: false,
+                                  onTap: () {
+                                    context.read<SearchBloc>().add(FilterChanged(
+                                          tagIds: [tag.id],
+                                        ));
+                                    context.read<SearchBloc>().add(const SearchVenues());
+                                    context.push('/search');
+                                  },
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
 

@@ -40,11 +40,6 @@ class _BottomNav extends StatelessWidget {
           selectedIcon: Icon(Icons.favorite),
           label: 'Favoriler',
         ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline),
-          selectedIcon: Icon(Icons.person),
-          label: 'Profil',
-        ),
       ],
     );
   }
@@ -52,7 +47,6 @@ class _BottomNav extends StatelessWidget {
   int _indexFromLocation(String location) {
     if (location.startsWith('/explore')) return 1;
     if (location.startsWith('/favorites')) return 2;
-    if (location.startsWith('/profile')) return 3;
     return 0; // /home
   }
 
@@ -64,8 +58,6 @@ class _BottomNav extends StatelessWidget {
         context.go('/explore');
       case 2:
         context.go('/favorites');
-      case 3:
-        context.go('/profile');
     }
   }
 }

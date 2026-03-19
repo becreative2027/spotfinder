@@ -144,8 +144,31 @@ class ProfileScreen extends StatelessWidget {
                   icon: Icons.logout_rounded,
                   label: 'Çıkış Yap',
                   color: colorScheme.error,
-                  onTap: () {
-                    context.read<AuthBloc>().add(const LogoutRequested());
+                  onTap: () async {
+                    final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: const Text('Çıkış Yap'),
+                        content: const Text(
+                            'Hesabınızdan çıkış yapmak istediğinize emin misiniz?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(ctx).pop(false),
+                            child: const Text('Hayır'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.of(ctx).pop(true),
+                            style: FilledButton.styleFrom(
+                              backgroundColor: Theme.of(ctx).colorScheme.error,
+                            ),
+                            child: const Text('Evet, Çıkış Yap'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirmed == true && context.mounted) {
+                      context.read<AuthBloc>().add(const LogoutRequested());
+                    }
                   },
                 ),
               ],
