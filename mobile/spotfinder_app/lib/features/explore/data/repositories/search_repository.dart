@@ -37,7 +37,7 @@ class SearchRepository {
     if (conceptTagIds != null && conceptTagIds.isNotEmpty) {
       query['conceptTagIds'] = conceptTagIds.join(',');
     }
-    if (nameQuery != null && nameQuery.isNotEmpty) query['name'] = nameQuery;
+    if (nameQuery != null && nameQuery.isNotEmpty) query['nameQuery'] = nameQuery;
 
     final response = await _dio.get(
       '${ApiConstants.searchBaseUrl}/api/v1/search/venues',
